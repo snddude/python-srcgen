@@ -1,7 +1,7 @@
+import argparse
+from sys import argv
 from os import listdir
 from os.path import join, splitext, isdir, isfile
-from sys import argv
-import argparse
 
 PATH_SOURCELIST_FILE = "sourcelist.cmake"
 
@@ -13,7 +13,7 @@ file_extensions = []
 sources = []
 
 
-def parse_folder(folder_path):
+def search_folder(folder_path):
     for entry in listdir(folder_path):
         sub_path = join(folder_path, entry)
 
@@ -21,7 +21,7 @@ def parse_folder(folder_path):
             continue
 
         if isdir(sub_path):
-            parse_folder(sub_path)
+            search_folder(sub_path)
             continue
 
         if not isfile(sub_path):
@@ -63,6 +63,7 @@ parser.add_argument(
     help="cmake target name",
     required=False)
 
+
 print(f"Running {argv[0]}...")
 
 args = parser.parse_args()
@@ -82,7 +83,7 @@ print(f"  extensions: {file_extensions}")
 path_excluded_folders = args.exclude if args.exclude else "None"
 print(f"  exclusions: {path_excluded_folders}\n")
 
-parse_folder(path_input_folder)
+search_folder(path_input_folder)
 
 
 with open(join(path_output_folder, PATH_SOURCELIST_FILE), "w") as file:
