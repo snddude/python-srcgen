@@ -5,10 +5,10 @@ import argparse
 
 PATH_SOURCELIST_FILE = "sourcelist.cmake"
 
-path_project_directory = ""
-path_sourcelist_directory = ""
-path_exclude_directories = []
-source_file_extensions = []
+path_input_folder = ""
+path_output_folder = ""
+path_excluded_folders = []
+file_extensions = []
 
 sources = []
 
@@ -17,7 +17,7 @@ def parse_folder(folder_path):
     for entry in listdir(folder_path):
         sub_path = join(folder_path, entry)
 
-        if sub_path in path_exclude_directories:
+        if sub_path in path_excluded_folders:
             continue
 
         if isdir(sub_path):
@@ -27,7 +27,7 @@ def parse_folder(folder_path):
         if not isfile(sub_path):
             continue
 
-        if splitext(sub_path)[1] in source_file_extensions:
+        if splitext(sub_path)[1] in file_extensions:
             sources.append(sub_path)
             print(f"  discovered: {sub_path}")
 
@@ -35,11 +35,6 @@ def parse_folder(folder_path):
 parser = argparse.ArgumentParser(
     description="A Python script for generating sourcelist.cmake files")
 
-parser.add_argument(
-    "-t",
-    "--target",
-    help="cmake target name",
-    required=False)
 parser.add_argument(
     "-i",
     "--input",
@@ -51,43 +46,46 @@ parser.add_argument(
     help=f"path to folder in which to put the {PATH_SOURCELIST_FILE} file",
     required=False)
 parser.add_argument(
+    "-x",
+    "--exclude",
+    help="paths to folders to exclude from search",
+    required=False,
+    nargs="+")
+parser.add_argument(
     "-e",
     "--extensions",
     help="source file extensions to look for",
     required=True,
     nargs="+")
 parser.add_argument(
-    "-x",
-    "--exclude",
-    help="paths to folders to exclude from search",
-    required=False,
-    nargs="+")
-
-
-args = parser.parse_args()
-
-path_project_directory = args.input
-source_file_extensions = args.extensions
-
-path_sourcelist_directory = args.output if args.output else path_project_directory
-path_exclude_directories = args.exclude if args.exclude else "None"
-
+    "-t",
+    "--target",
+    help="cmake target name",
+    required=False)
 
 print(f"Running {argv[0]}...")
+
+args = parser.parse_args()
 
 if args.target:
     print(f"  target: {args.target}")
 
-print(f"  input directory: {path_project_directory}")
-print(f"  output directory: {path_sourcelist_directory}")
-print(f"  extensions: {source_file_extensions}")
-print(f"  exclusions: {path_exclude_directories}\n")
+path_input_folder = args.input
+print(f"  input directory: {path_input_folder}")
 
-parse_folder(path_project_directory)
-print()
+path_output_folder = args.output if args.output else path_input_folder
+print(f"  output directory: {path_output_folder}")
+
+file_extensions = args.extensions
+print(f"  extensions: {file_extensions}")
+
+path_excluded_folders = args.exclude if args.exclude else "None"
+print(f"  exclusions: {path_excluded_folders}\n")
+
+parse_folder(path_input_folder)
 
 
-with open(join(path_sourcelist_directory, PATH_SOURCELIST_FILE), "w") as file:
+with open(join(path_output_folder, PATH_SOURCELIST_FILE), "w") as file:
     file.write("set(SOURCES ${SOURCES}\n")
 
     for source in sources:
