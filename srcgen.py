@@ -1,27 +1,23 @@
 import argparse
 from sys import argv
 from os import listdir
-from os.path import join, splitext, isdir, isfile
+from os.path import join, splitext, isdir, isfile, abspath
 
 PATH_SOURCELIST_FILE = "sourcelist.cmake"
 
-path_input_folder = ""
-path_output_folder = ""
-path_excluded_folders = []
-file_extensions = []
 
-sources = []
+def search_folder(input_folder, excluded_folders, file_extensions):
+    sources = []
 
+    for entry in listdir(input_folder):
+        sub_path = join(input_folder, entry)
 
-def search_folder(folder_path):
-    for entry in listdir(folder_path):
-        sub_path = join(folder_path, entry)
-
-        if sub_path in path_excluded_folders:
+        if sub_path in excluded_folders:
             continue
 
         if isdir(sub_path):
-            search_folder(sub_path)
+            sources += search_folder(
+                sub_path, excluded_folders, file_extensions)
             continue
 
         if not isfile(sub_path):
@@ -31,6 +27,10 @@ def search_folder(folder_path):
             sources.append(sub_path)
             print(f"  discovered: {sub_path}")
 
+    return sources
+
+
+# Command line argument handling
 
 parser = argparse.ArgumentParser(
     description="A Python script for generating sourcelist.cmake files")
@@ -43,7 +43,7 @@ parser.add_argument(
 parser.add_argument(
     "-o",
     "--output",
-    help=f"path to folder in which to put the {PATH_SOURCELIST_FILE} file",
+    help=f"path to folder in which to put the {PATH_SOURCELIST_FILE} file. If not specified, the file will be put into --input",
     required=False)
 parser.add_argument(
     "-x",
@@ -63,33 +63,45 @@ parser.add_argument(
     help="cmake target name",
     required=False)
 
-
-print(f"Running {argv[0]}...")
-
 args = parser.parse_args()
 
+
+# Print parameters
+
+print(f"\nRunning {argv[0]}...")
 if args.target:
     print(f"  target: {args.target}")
 
-path_input_folder = args.input
-print(f"  input directory: {path_input_folder}")
+print(f"  input directory: {args.input}")
 
-path_output_folder = args.output if args.output else path_input_folder
-print(f"  output directory: {path_output_folder}")
+output = args.output if args.output else args.input
+print(f"  output directory: {args.output}")
 
-file_extensions = args.extensions
-print(f"  extensions: {file_extensions}")
+print("  extensions:", str(args.extensions).replace("'", "")[1:-1])
 
-path_excluded_folders = args.exclude if args.exclude else "None"
-print(f"  exclusions: {path_excluded_folders}\n")
+exclusions = []
+if args.exclude:
+    exclusions = args.exclude
+    print(f"  exclusions: {exclusions}")
 
-search_folder(path_input_folder)
+print()
 
 
-with open(join(path_output_folder, PATH_SOURCELIST_FILE), "w") as file:
-    file.write("set(SOURCES ${SOURCES}\n")
+# Search input folder and write output to file (if any source files were found)
 
-    for source in sources:
-        file.write(f"\t{source}\n")
+sources = search_folder(args.input, exclusions, args.extensions)
 
-    file.write(")")
+if len(sources) > 0:
+    filepath = join(args.output, PATH_SOURCELIST_FILE)
+
+    with open(filepath, "w") as file:
+        file.write("set(SOURCES ${SOURCES}\n")
+
+        for source in sources:
+            file.write(f"\t{source}\n")
+
+        file.write(")\n")
+
+    print(f"Found source files written to: {abspath(filepath)}")
+else:
+    print("No source files found")
