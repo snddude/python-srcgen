@@ -36,6 +36,11 @@ parser = argparse.ArgumentParser(
     description="A Python script for generating sourcelist.cmake files")
 
 parser.add_argument(
+    "-t",
+    "--target",
+    help="cmake target name",
+    required=False)
+parser.add_argument(
     "-i",
     "--input",
     help="path to folder in which to search for source files",
@@ -68,7 +73,11 @@ path_sourcelist_directory = args.output if args.output else path_project_directo
 path_exclude_directories = args.exclude if args.exclude else "None"
 
 
-print(f"\n{argv[0]}:")
+print(f"Running {argv[0]}...")
+
+if args.target:
+    print(f"  target: {args.target}")
+
 print(f"  input directory: {path_project_directory}")
 print(f"  output directory: {path_sourcelist_directory}")
 print(f"  extensions: {source_file_extensions}")
