@@ -33,7 +33,7 @@ def parse_folder(folder_path):
 
 
 parser = argparse.ArgumentParser(
-    description="Python script for discovering source files for cmake")
+    description="A Python script for generating sourcelist.cmake files")
 
 parser.add_argument(
     "-i",
